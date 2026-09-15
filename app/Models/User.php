@@ -42,16 +42,36 @@ class User extends Model
 
         return (int) $this->db->lastInsertId();
     }
+
     public function assignRole(int $userId, int $roleId): void
     {
         $statement = $this->db->prepare(
             "INSERT INTO user_roles (user_id, role_id)
-         VALUES (:user_id, :role_id)"
+             VALUES (:user_id, :role_id)"
         );
 
         $statement->execute([
             'user_id' => $userId,
             'role_id' => $roleId,
         ]);
+    }
+
+    public function getRoles(int $userId): array
+    {
+        $statement = $this->db->prepare(
+            "SELECT r.name
+             FROM roles r
+             INNER JOIN user_roles ur
+                 ON ur.role_id = r.id
+             WHERE ur.user_id = :user_id"
+        );
+
+        $statement->execute([
+            'user_id' => $userId,
+        ]);
+
+        return $statement->fetchAll(
+            \PDO::FETCH_COLUMN
+        );
     }
 }

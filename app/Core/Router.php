@@ -80,7 +80,14 @@ class Router
          * Run middleware before the controller.
          */
         foreach ($route['middleware'] as $middleware) {
-            $middleware::handle();
+            if (is_array($middleware)) {
+                $middlewareClass = $middleware[0];
+                $middlewareArguments = $middleware[1] ?? [];
+
+                $middlewareClass::handle(...$middlewareArguments);
+            } else {
+                $middleware::handle();
+            }
         }
 
         $handler = $route['handler'];

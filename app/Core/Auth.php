@@ -48,17 +48,25 @@ class Auth
     }
 
     public static function user(): ?array
-    {
-        $id = self::id();
+{
+    $id = self::id();
 
-        if ($id === null) {
-            return null;
-        }
-
-        $userModel = new User();
-
-        return $userModel->find($id);
+    if ($id === null) {
+        return null;
     }
+
+    $userModel = new User();
+
+    $user = $userModel->find($id);
+
+    if (!$user) {
+        return null;
+    }
+
+    $user['roles'] = $userModel->getRoles($id);
+
+    return $user;
+}
 
     public static function logout(): void
     {
