@@ -74,4 +74,30 @@ class User extends Model
             \PDO::FETCH_COLUMN
         );
     }
+    public function getAllWithRoles(): array
+    {
+        $statement = $this->db->query(
+            "SELECT
+            u.id,
+            u.name,
+            u.email,
+            u.status,
+            u.created_at,
+            GROUP_CONCAT(r.name ORDER BY r.name SEPARATOR ', ') AS roles
+         FROM users u
+         LEFT JOIN user_roles ur
+            ON ur.user_id = u.id
+         LEFT JOIN roles r
+            ON r.id = ur.role_id
+         GROUP BY
+            u.id,
+            u.name,
+            u.email,
+            u.status,
+            u.created_at
+         ORDER BY u.created_at DESC"
+        );
+
+        return $statement->fetchAll();
+    }
 }
