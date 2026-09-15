@@ -12,6 +12,8 @@ class App
     {
         self::loadEnvironment();
         self::loadConfiguration();
+
+        Session::start();
     }
 
     private static function loadEnvironment(): void
@@ -30,8 +32,10 @@ class App
         ];
     }
 
-    public static function config(string $key, mixed $default = null): mixed
-    {
+    public static function config(
+        string $key,
+        mixed $default = null
+    ): mixed {
         $segments = explode('.', $key);
 
         $value = self::$config;
