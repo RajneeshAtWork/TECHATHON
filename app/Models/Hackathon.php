@@ -8,9 +8,6 @@ class Hackathon extends Model
 {
     protected string $table = 'hackathons';
 
-    /**
-     * Get all hackathons with organizer and category information.
-     */
     public function getAllWithDetails(): array
     {
         $statement = $this->db->query(
@@ -30,31 +27,21 @@ class Hackathon extends Model
                 h.submission_deadline,
                 h.status,
                 h.created_at,
-
                 u.name AS organizer_name,
-
                 c.name AS category_name
-
              FROM hackathons h
-
              INNER JOIN organizers o
                 ON o.id = h.organizer_id
-
              INNER JOIN users u
                 ON u.id = o.user_id
-
              LEFT JOIN categories c
                 ON c.id = h.category_id
-
              ORDER BY h.created_at DESC"
         );
 
         return $statement->fetchAll();
     }
 
-    /**
-     * Get hackathons waiting for admin approval.
-     */
     public function getPendingApproval(): array
     {
         $statement = $this->db->query(
@@ -71,33 +58,22 @@ class Hackathon extends Model
                 h.hackathon_end,
                 h.status,
                 h.created_at,
-
                 u.name AS organizer_name,
-
                 c.name AS category_name
-
              FROM hackathons h
-
              INNER JOIN organizers o
                 ON o.id = h.organizer_id
-
              INNER JOIN users u
                 ON u.id = o.user_id
-
              LEFT JOIN categories c
                 ON c.id = h.category_id
-
              WHERE h.status = 'pending_approval'
-
              ORDER BY h.created_at ASC"
         );
 
         return $statement->fetchAll();
     }
 
-    /**
-     * Find a hackathon by slug.
-     */
     public function findBySlug(string $slug): ?array
     {
         $statement = $this->db->prepare(
@@ -105,20 +81,14 @@ class Hackathon extends Model
                 h.*,
                 u.name AS organizer_name,
                 c.name AS category_name
-
              FROM hackathons h
-
              INNER JOIN organizers o
                 ON o.id = h.organizer_id
-
              INNER JOIN users u
                 ON u.id = o.user_id
-
              LEFT JOIN categories c
                 ON c.id = h.category_id
-
              WHERE h.slug = :slug
-
              LIMIT 1"
         );
 
@@ -131,9 +101,6 @@ class Hackathon extends Model
         return $hackathon ?: null;
     }
 
-    /**
-     * Update hackathon status.
-     */
     public function updateStatus(
         int $hackathonId,
         string $status
@@ -148,5 +115,164 @@ class Hackathon extends Model
             'status' => $status,
             'id' => $hackathonId,
         ]);
+    }
+
+    public function create(array $data): int
+    {
+        $statement = $this->db->prepare(
+            "INSERT INTO {$this->table} (
+                organizer_id,
+                category_id,
+                title,
+                slug,
+                description,
+                rules,
+                requirements,
+                participation_type,
+                min_team_size,
+                max_team_size,
+                max_teams,
+                max_participants,
+                registration_start,
+                registration_end,
+                hackathon_start,
+                hackathon_end,
+                submission_deadline,
+                status
+            )
+            VALUES (
+                :organizer_id,
+                :category_id,
+                :title,
+                :slug,
+                :description,
+                :rules,
+                :requirements,
+                :participation_type,
+                :min_team_size,
+                :max_team_size,
+                :max_teams,
+                :max_participants,
+                :registration_start,
+                :registration_end,
+                :hackathon_start,
+                :hackathon_end,
+                :submission_deadline,
+                'draft'
+            )"
+        );
+
+        $statement->execute([
+            'organizer_id' => $data['organizer_id'],
+            'category_id' => $data['category_id'],
+            'title' => $data['title'],
+            'slug' => $data['slug'],
+            'description' => $data['description'],
+            'rules' => $data['rules'],
+            'requirements' => $data['requirements'],
+            'participation_type' => $data['participation_type'],
+            'min_team_size' => $data['min_team_size'],
+            'max_team_size' => $data['max_team_size'],
+            'max_teams' => $data['max_teams'],
+            'max_participants' => $data['max_participants'],
+            'registration_start' => $data['registration_start'],
+            'registration_end' => $data['registration_end'],
+            'hackathon_start' => $data['hackathon_start'],
+            'hackathon_end' => $data['hackathon_end'],
+            'submission_deadline' => $data['submission_deadline'],
+        ]);
+
+        return (int) $this->db->lastInsertId();
+    }
+
+    public function slugExists(string $slug): bool
+    {
+        $statement = $this->db->prepare(
+            "SELECT COUNT(*)
+             FROM {$this->table}
+             WHERE slug = :slug"
+        );
+
+        $statement->execute([
+            'slug' => $slug,
+        ]);
+
+        return (int) $statement->fetchColumn() > 0;
+    }
+
+    public function findForOrganizer(
+        int $hackathonId,
+        int $organizerId
+    ): ?array {
+        $statement = $this->db->prepare(
+            "SELECT
+            h.*,
+            c.name AS category_name
+         FROM {$this->table} h
+         LEFT JOIN categories c
+            ON c.id = h.category_id
+         WHERE h.id = :hackathon_id
+           AND h.organizer_id = :organizer_id
+         LIMIT 1"
+        );
+
+        $statement->execute([
+            'hackathon_id' => $hackathonId,
+            'organizer_id' => $organizerId,
+        ]);
+
+        $hackathon = $statement->fetch();
+
+        return $hackathon ?: null;
+    }
+
+    public function updateForOrganizer(
+        int $hackathonId,
+        int $organizerId,
+        array $data
+    ): bool {
+        $statement = $this->db->prepare(
+            "UPDATE {$this->table}
+         SET
+            category_id = :category_id,
+            title = :title,
+            description = :description,
+            rules = :rules,
+            requirements = :requirements,
+            participation_type = :participation_type,
+            min_team_size = :min_team_size,
+            max_team_size = :max_team_size,
+            max_teams = :max_teams,
+            max_participants = :max_participants,
+            registration_start = :registration_start,
+            registration_end = :registration_end,
+            hackathon_start = :hackathon_start,
+            hackathon_end = :hackathon_end,
+            submission_deadline = :submission_deadline
+         WHERE id = :hackathon_id
+           AND organizer_id = :organizer_id"
+        );
+
+        $statement->execute([
+            'category_id' => $data['category_id'],
+            'title' => $data['title'],
+            'description' => $data['description'],
+            'rules' => $data['rules'],
+            'requirements' => $data['requirements'],
+            'participation_type' => $data['participation_type'],
+            'min_team_size' => $data['min_team_size'],
+            'max_team_size' => $data['max_team_size'],
+            'max_teams' => $data['max_teams'],
+            'max_participants' => $data['max_participants'],
+            'registration_start' => $data['registration_start'],
+            'registration_end' => $data['registration_end'],
+            'hackathon_start' => $data['hackathon_start'],
+            'hackathon_end' => $data['hackathon_end'],
+            'submission_deadline' => $data['submission_deadline'],
+            'hackathon_id' => $hackathonId,
+            'organizer_id' => $organizerId,
+        ]);
+
+        return $statement->rowCount() > 0;
     }
 }
