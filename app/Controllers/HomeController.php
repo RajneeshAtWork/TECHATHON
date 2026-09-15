@@ -2,13 +2,14 @@
 
 namespace App\Controllers;
 
-class HomeController
+use App\Core\Controller;
+
+class HomeController extends Controller
 {
     public function index(): string
     {
-        return '
-            <h1>TECHATHON</h1>
-            <p>Home Controller is working ✅</p>
-        ';
+        return $this->view('home/index', [
+            'title' => 'TECHATHON',
+        ]);
     }
 }

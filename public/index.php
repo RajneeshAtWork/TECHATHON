@@ -3,16 +3,21 @@
 require_once __DIR__ . '/../vendor/autoload.php';
 
 use App\Core\App;
+use App\Core\Request;
+use App\Core\Response;
 
 App::boot();
 
+$request = new Request();
+$response = new Response();
+
 $router = require dirname(__DIR__) . '/routes/web.php';
 
-$response = $router->dispatch(
-    $_SERVER['REQUEST_METHOD'],
-    $_SERVER['REQUEST_URI']
+$result = $router->dispatch(
+    $request->method(),
+    $request->uri()
 );
 
-if ($response !== null) {
-    echo $response;
+if ($result !== null) {
+    $response->html($result);
 }

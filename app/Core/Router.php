@@ -28,13 +28,33 @@ class Router
         string $method,
         string $uri
     ): mixed {
-        $path = parse_url($uri, PHP_URL_PATH);
+        $path = parse_url($uri, PHP_URL_PATH) ?: '/';
 
-        $path = rtrim($path, '/');
+        /*
+         * The application is running from:
+         * /TECHATHON/public/
+         *
+         * Remove the application's base path so that:
+         *
+         * /TECHATHON/public/
+         * becomes /
+         *
+         * /TECHATHON/public/login
+         * becomes /login
+         */
+        $scriptName = $_SERVER['SCRIPT_NAME'] ?? '';
+        $basePath = rtrim(str_replace(
+            '/index.php',
+            '',
+            dirname($scriptName)
+        ), '/');
 
-        if ($path === '') {
-            $path = '/';
+        if ($basePath !== '' && str_starts_with($path, $basePath)) {
+            $path = substr($path, strlen($basePath));
         }
+
+        $path = '/' . ltrim($path, '/');
+        $path = rtrim($path, '/') ?: '/';
 
         if (!isset($this->routes[$method][$path])) {
             http_response_code(404);
