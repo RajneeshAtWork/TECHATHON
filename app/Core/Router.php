@@ -6,22 +6,32 @@ class Router
 {
     private array $routes = [];
 
-    public function get(string $path, array|callable $handler): void
-    {
-        $this->addRoute('GET', $path, $handler);
+    public function get(
+        string $path,
+        array|callable $handler,
+        array $middleware = []
+    ): void {
+        $this->addRoute('GET', $path, $handler, $middleware);
     }
 
-    public function post(string $path, array|callable $handler): void
-    {
-        $this->addRoute('POST', $path, $handler);
+    public function post(
+        string $path,
+        array|callable $handler,
+        array $middleware = []
+    ): void {
+        $this->addRoute('POST', $path, $handler, $middleware);
     }
 
     private function addRoute(
         string $method,
         string $path,
-        array|callable $handler
+        array|callable $handler,
+        array $middleware = []
     ): void {
-        $this->routes[$method][$path] = $handler;
+        $this->routes[$method][$path] = [
+            'handler' => $handler,
+            'middleware' => $middleware,
+        ];
     }
 
     public function dispatch(
@@ -33,24 +43,26 @@ class Router
         /*
          * The application is running from:
          * /TECHATHON/public/
-         *
-         * Remove the application's base path so that:
-         *
-         * /TECHATHON/public/
-         * becomes /
-         *
-         * /TECHATHON/public/login
-         * becomes /login
          */
         $scriptName = $_SERVER['SCRIPT_NAME'] ?? '';
-        $basePath = rtrim(str_replace(
-            '/index.php',
-            '',
-            dirname($scriptName)
-        ), '/');
 
-        if ($basePath !== '' && str_starts_with($path, $basePath)) {
-            $path = substr($path, strlen($basePath));
+        $basePath = rtrim(
+            str_replace(
+                '/index.php',
+                '',
+                dirname($scriptName)
+            ),
+            '/'
+        );
+
+        if (
+            $basePath !== '' &&
+            str_starts_with($path, $basePath)
+        ) {
+            $path = substr(
+                $path,
+                strlen($basePath)
+            );
         }
 
         $path = '/' . ltrim($path, '/');
@@ -62,7 +74,16 @@ class Router
             return '404 - Page Not Found';
         }
 
-        $handler = $this->routes[$method][$path];
+        $route = $this->routes[$method][$path];
+
+        /*
+         * Run middleware before the controller.
+         */
+        foreach ($route['middleware'] as $middleware) {
+            $middleware::handle();
+        }
+
+        $handler = $route['handler'];
 
         if (is_callable($handler)) {
             return call_user_func($handler);

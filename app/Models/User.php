@@ -25,4 +25,33 @@ class User extends Model
 
         return $user ?: null;
     }
+
+    public function create(array $data): int
+    {
+        $statement = $this->db->prepare(
+            "INSERT INTO {$this->table}
+            (name, email, password)
+            VALUES (:name, :email, :password)"
+        );
+
+        $statement->execute([
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'password' => $data['password'],
+        ]);
+
+        return (int) $this->db->lastInsertId();
+    }
+    public function assignRole(int $userId, int $roleId): void
+    {
+        $statement = $this->db->prepare(
+            "INSERT INTO user_roles (user_id, role_id)
+         VALUES (:user_id, :role_id)"
+        );
+
+        $statement->execute([
+            'user_id' => $userId,
+            'role_id' => $roleId,
+        ]);
+    }
 }
