@@ -835,9 +835,10 @@ $participationLabel =
 
                             </p>
 
-                            <button type="button" class="btn btn-outline-primary btn-sm" disabled>
-                                Coming Next
-                            </button>
+                            <a href="/TECHATHON/public/organizer/hackathons/<?= (int) $hackathon['id'] ?>/judges"
+                                class="btn btn-outline-primary btn-sm">
+                                Manage Judges
+                            </a>
 
                         </div>
 

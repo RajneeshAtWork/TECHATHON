@@ -16,6 +16,7 @@ use App\Controllers\Organizer\RegistrationController;
 use App\Controllers\Organizer\TeamController as OrganizerTeamController;
 use App\Controllers\Organizer\ProjectController as OrganizerProjectController;
 use App\Controllers\Organizer\SubmissionController as OrganizerSubmissionController;
+use App\Controllers\Organizer\JudgeController as OrganizerJudgeController;
 
 use App\Controllers\Participant\HackathonController as ParticipantHackathonController;
 use App\Controllers\Participant\InvitationController;
@@ -486,6 +487,55 @@ $router->get(
     ]
 );
 
+/*
+|--------------------------------------------------------------------------
+| Organizer Judge Management
+|--------------------------------------------------------------------------
+*/
+
+/*
+ * View Hackathon Judges
+ */
+$router->get(
+    '/organizer/hackathons/{id}/judges',
+    [OrganizerJudgeController::class, 'index'],
+    [
+        [
+            RoleMiddleware::class,
+            ['organizer']
+        ]
+    ]
+);
+
+
+/*
+ * Assign Judge
+ */
+$router->post(
+    '/organizer/hackathons/{id}/judges/assign',
+    [OrganizerJudgeController::class, 'assign'],
+    [
+        [
+            RoleMiddleware::class,
+            ['organizer']
+        ]
+    ]
+);
+
+
+/*
+ * Remove Judge
+ */
+$router->post(
+    '/organizer/hackathons/{id}/judges/{assignmentId}/remove',
+    [OrganizerJudgeController::class, 'remove'],
+    [
+        [
+            RoleMiddleware::class,
+            ['organizer']
+        ]
+    ]
+);
 
 
 /*
