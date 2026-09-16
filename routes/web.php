@@ -15,6 +15,7 @@ use App\Controllers\Organizer\OrganizerController;
 use App\Controllers\Organizer\RegistrationController;
 use App\Controllers\Organizer\TeamController as OrganizerTeamController;
 use App\Controllers\Organizer\ProjectController as OrganizerProjectController;
+use App\Controllers\Organizer\SubmissionController as OrganizerSubmissionController;
 
 use App\Controllers\Participant\HackathonController as ParticipantHackathonController;
 use App\Controllers\Participant\InvitationController;
@@ -448,6 +449,43 @@ $router->get(
         ]
     ]
 );
+
+
+/*
+|--------------------------------------------------------------------------
+| Organizer Submission Management
+|--------------------------------------------------------------------------
+*/
+
+/*
+ * View Hackathon Submissions
+ */
+$router->get(
+    '/organizer/hackathons/{id}/submissions',
+    [OrganizerSubmissionController::class, 'index'],
+    [
+        [
+            RoleMiddleware::class,
+            ['organizer']
+        ]
+    ]
+);
+
+
+/*
+ * View Submission Details
+ */
+$router->get(
+    '/organizer/hackathons/{id}/submissions/{submissionId}',
+    [OrganizerSubmissionController::class, 'show'],
+    [
+        [
+            RoleMiddleware::class,
+            ['organizer']
+        ]
+    ]
+);
+
 
 
 /*
