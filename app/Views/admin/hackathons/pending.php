@@ -1,7 +1,19 @@
+<?php
+
+use App\Core\Csrf;
+use App\Core\Session;
+
+$hackathons = $hackathons ?? [];
+
+$csrfToken = $csrfToken ?? Csrf::token();
+
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
+
     <meta charset="UTF-8">
 
     <meta
@@ -10,18 +22,28 @@
     >
 
     <title>
-        <?= htmlspecialchars($title) ?> - TECHATHON
+        <?= htmlspecialchars(
+            $title ?? 'Pending Hackathons'
+        ) ?>
+        - TECHATHON
     </title>
 
     <link
         href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
         rel="stylesheet"
     >
+
 </head>
 
 <body class="bg-light">
 
+
+<!-- ================================================================
+     NAVBAR
+     ================================================================ -->
+
 <nav class="navbar navbar-dark bg-dark">
+
     <div class="container">
 
         <a
@@ -30,6 +52,7 @@
         >
             TECHATHON Admin
         </a>
+
 
         <div class="d-flex gap-2">
 
@@ -50,43 +73,120 @@
             <form
                 method="POST"
                 action="/TECHATHON/public/logout"
+                class="d-inline"
             >
+
+                <input
+                    type="hidden"
+                    name="_csrf_token"
+                    value="<?= htmlspecialchars($csrfToken) ?>"
+                >
+
                 <button
                     type="submit"
                     class="btn btn-outline-light btn-sm"
                 >
                     Logout
                 </button>
+
             </form>
 
         </div>
 
     </div>
+
 </nav>
+
+
+<!-- ================================================================
+     MAIN CONTENT
+     ================================================================ -->
 
 <main class="container py-5">
 
+
+    <!-- ============================================================
+         PAGE HEADER
+         ============================================================ -->
+
     <div class="mb-4">
 
-        <h1>
+        <h1 class="mb-1">
             Pending Hackathon Approvals
         </h1>
 
-        <p class="text-muted">
+        <p class="text-muted mb-0">
             Review hackathons submitted by organizers.
         </p>
 
     </div>
 
+
+    <!-- ============================================================
+         FLASH MESSAGES
+         ============================================================ -->
+
+    <?php if ($success = Session::getFlash('success')): ?>
+
+        <div
+            class="alert alert-success alert-dismissible fade show"
+            role="alert"
+        >
+
+            <?= htmlspecialchars($success) ?>
+
+            <button
+                type="button"
+                class="btn-close"
+                data-bs-dismiss="alert"
+            ></button>
+
+        </div>
+
+    <?php endif; ?>
+
+
+    <?php if ($error = Session::getFlash('error')): ?>
+
+        <div
+            class="alert alert-danger alert-dismissible fade show"
+            role="alert"
+        >
+
+            <?= htmlspecialchars($error) ?>
+
+            <button
+                type="button"
+                class="btn-close"
+                data-bs-dismiss="alert"
+            ></button>
+
+        </div>
+
+    <?php endif; ?>
+
+
+    <!-- ============================================================
+         EMPTY STATE
+         ============================================================ -->
+
     <?php if (empty($hackathons)): ?>
 
         <div class="alert alert-success">
+
             There are no hackathons waiting for approval.
+
         </div>
+
 
     <?php else: ?>
 
-        <div class="card shadow-sm">
+
+        <!-- ========================================================
+             TABLE
+             ======================================================== -->
+
+        <div class="card border-0 shadow-sm">
 
             <div class="card-body">
 
@@ -97,70 +197,140 @@
                         <thead class="table-dark">
 
                             <tr>
-                                <th>ID</th>
-                                <th>Hackathon</th>
-                                <th>Organizer</th>
-                                <th>Category</th>
-                                <th>Participation</th>
-                                <th>Capacity</th>
-                                <th>Registration</th>
-                                <th>Hackathon Dates</th>
-                                <th>Action</th>
+
+                                <th>
+                                    ID
+                                </th>
+
+                                <th>
+                                    Hackathon
+                                </th>
+
+                                <th>
+                                    Organizer
+                                </th>
+
+                                <th>
+                                    Category
+                                </th>
+
+                                <th>
+                                    Participation
+                                </th>
+
+                                <th>
+                                    Capacity
+                                </th>
+
+                                <th>
+                                    Registration
+                                </th>
+
+                                <th>
+                                    Hackathon Dates
+                                </th>
+
+                                <th>
+                                    Action
+                                </th>
+
                             </tr>
 
                         </thead>
+
 
                         <tbody>
 
                         <?php foreach ($hackathons as $hackathon): ?>
 
+                            <?php
+
+                            $participation =
+                                $hackathon[
+                                    'participation_type'
+                                ] ?? 'individual';
+
+                            ?>
+
                             <tr>
 
-                                <td>
-                                    <?= (int) $hackathon['id'] ?>
-                                </td>
+
+                                <!-- ==================================================
+                                     ID
+                                     ================================================== -->
 
                                 <td>
+
+                                    <?= (int) $hackathon['id'] ?>
+
+                                </td>
+
+
+                                <!-- ==================================================
+                                     HACKATHON
+                                     ================================================== -->
+
+                                <td>
+
                                     <strong>
+
                                         <?= htmlspecialchars(
                                             $hackathon['title']
                                         ) ?>
+
                                     </strong>
 
                                     <div class="small text-muted">
+
                                         <?= htmlspecialchars(
                                             $hackathon['slug']
                                         ) ?>
+
                                     </div>
+
                                 </td>
 
+
+                                <!-- ==================================================
+                                     ORGANIZER
+                                     ================================================== -->
+
                                 <td>
+
                                     <?= htmlspecialchars(
                                         $hackathon['organizer_name']
                                     ) ?>
+
                                 </td>
 
+
+                                <!-- ==================================================
+                                     CATEGORY
+                                     ================================================== -->
+
                                 <td>
+
                                     <?= htmlspecialchars(
                                         $hackathon['category_name']
                                             ?? 'Uncategorized'
                                     ) ?>
+
                                 </td>
 
-                                <td>
 
-                                    <?php
-                                        $participation =
-                                            $hackathon[
-                                                'participation_type'
-                                            ];
-                                    ?>
+                                <!-- ==================================================
+                                     PARTICIPATION
+                                     ================================================== -->
+
+                                <td>
 
                                     <?php if (
                                         $participation === 'individual'
                                     ): ?>
 
-                                        <span class="badge text-bg-primary">
+                                        <span
+                                            class="badge text-bg-primary"
+                                        >
                                             Individual
                                         </span>
 
@@ -168,13 +338,17 @@
                                         $participation === 'team'
                                     ): ?>
 
-                                        <span class="badge text-bg-success">
+                                        <span
+                                            class="badge text-bg-success"
+                                        >
                                             Team
                                         </span>
 
                                     <?php else: ?>
 
-                                        <span class="badge text-bg-info">
+                                        <span
+                                            class="badge text-bg-info"
+                                        >
                                             Individual + Team
                                         </span>
 
@@ -182,91 +356,221 @@
 
                                 </td>
 
+
+                                <!-- ==================================================
+                                     CAPACITY
+                                     ================================================== -->
+
                                 <td>
 
                                     <?php if (
                                         $participation === 'individual'
                                     ): ?>
 
-                                        <?= $hackathon[
-                                            'max_participants'
-                                        ] !== null
-                                            ? (int) $hackathon[
+                                        <?php if (
+                                            $hackathon[
                                                 'max_participants'
-                                            ]
-                                            : 'Unlimited'
-                                        ?>
-                                        participants
+                                            ] !== null
+                                        ): ?>
+
+                                            <?= (int) $hackathon[
+                                                'max_participants'
+                                            ] ?>
+
+                                            participants
+
+                                        <?php else: ?>
+
+                                            Unlimited participants
+
+                                        <?php endif; ?>
+
 
                                     <?php else: ?>
 
-                                        <?= $hackathon['max_teams'] !== null
-                                            ? (int) $hackathon['max_teams']
-                                            : 'Unlimited'
-                                        ?>
-                                        teams
+                                        <?php if (
+                                            $hackathon['max_teams']
+                                            !== null
+                                        ): ?>
+
+                                            <?= (int) $hackathon[
+                                                'max_teams'
+                                            ] ?>
+
+                                            teams
+
+                                        <?php else: ?>
+
+                                            Unlimited teams
+
+                                        <?php endif; ?>
 
                                     <?php endif; ?>
 
                                 </td>
 
+
+                                <!-- ==================================================
+                                     REGISTRATION
+                                     ================================================== -->
+
                                 <td>
+
                                     <div class="small">
-                                        <strong>Start:</strong><br>
+
+                                        <strong>
+                                            Start:
+                                        </strong>
+
+                                        <br>
+
                                         <?= htmlspecialchars(
-                                            $hackathon['registration_start']
+                                            $hackathon[
+                                                'registration_start'
+                                            ]
                                         ) ?>
+
                                     </div>
 
-                                    <div class="small mt-1">
-                                        <strong>End:</strong><br>
+
+                                    <div class="small mt-2">
+
+                                        <strong>
+                                            End:
+                                        </strong>
+
+                                        <br>
+
                                         <?= htmlspecialchars(
-                                            $hackathon['registration_end']
+                                            $hackathon[
+                                                'registration_end'
+                                            ]
                                         ) ?>
+
                                     </div>
+
                                 </td>
 
+
+                                <!-- ==================================================
+                                     HACKATHON DATES
+                                     ================================================== -->
+
                                 <td>
+
                                     <div class="small">
-                                        <strong>Start:</strong><br>
+
+                                        <strong>
+                                            Start:
+                                        </strong>
+
+                                        <br>
+
                                         <?= htmlspecialchars(
-                                            $hackathon['hackathon_start']
+                                            $hackathon[
+                                                'hackathon_start'
+                                            ]
                                         ) ?>
+
                                     </div>
 
-                                    <div class="small mt-1">
-                                        <strong>End:</strong><br>
+
+                                    <div class="small mt-2">
+
+                                        <strong>
+                                            End:
+                                        </strong>
+
+                                        <br>
+
                                         <?= htmlspecialchars(
-                                            $hackathon['hackathon_end']
+                                            $hackathon[
+                                                'hackathon_end'
+                                            ]
                                         ) ?>
+
                                     </div>
+
                                 </td>
 
+
+                                <!-- ==================================================
+                                     ACTIONS
+                                     ================================================== -->
+
                                 <td>
+
                                     <div class="d-flex gap-2">
 
-                                        <button
-                                            type="button"
-                                            class="btn btn-success btn-sm"
-                                            disabled
-                                        >
-                                            Approve
-                                        </button>
+                                        <!-- ========================================
+                                             APPROVE
+                                             ======================================== -->
 
-                                        <button
-                                            type="button"
-                                            class="btn btn-danger btn-sm"
-                                            disabled
+                                        <form
+                                            method="POST"
+                                            action="/TECHATHON/public/admin/hackathons/<?= (int) $hackathon['id'] ?>/approve"
+                                            class="d-inline"
+                                            onsubmit="return confirm('Approve this hackathon?');"
                                         >
-                                            Reject
-                                        </button>
+
+                                            <input
+                                                type="hidden"
+                                                name="_csrf_token"
+                                                value="<?= htmlspecialchars(
+                                                    $csrfToken
+                                                ) ?>"
+                                            >
+
+                                            <button
+                                                type="submit"
+                                                class="btn btn-success btn-sm"
+                                            >
+                                                Approve
+                                            </button>
+
+                                        </form>
+
+
+                                        <!-- ========================================
+                                             REJECT
+                                             ======================================== -->
+
+                                        <form
+                                            method="POST"
+                                            action="/TECHATHON/public/admin/hackathons/<?= (int) $hackathon['id'] ?>/reject"
+                                            class="d-inline"
+                                            onsubmit="return confirm('Reject this hackathon and return it to draft?');"
+                                        >
+
+                                            <input
+                                                type="hidden"
+                                                name="_csrf_token"
+                                                value="<?= htmlspecialchars(
+                                                    $csrfToken
+                                                ) ?>"
+                                            >
+
+                                            <button
+                                                type="submit"
+                                                class="btn btn-danger btn-sm"
+                                            >
+                                                Reject
+                                            </button>
+
+                                        </form>
 
                                     </div>
+
 
                                     <div class="small text-muted mt-2">
-                                        Approval actions coming next.
+
+                                        Approve to make this hackathon
+                                        available to participants.
+
                                     </div>
+
                                 </td>
+
 
                             </tr>
 
@@ -285,6 +589,15 @@
     <?php endif; ?>
 
 </main>
+
+
+<!-- ================================================================
+     BOOTSTRAP JAVASCRIPT
+     ================================================================ -->
+
+<script
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+></script>
 
 </body>
 </html>
