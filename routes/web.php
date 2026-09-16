@@ -14,6 +14,7 @@ use App\Controllers\Organizer\HackathonController as OrganizerHackathonControlle
 use App\Controllers\Organizer\OrganizerController;
 use App\Controllers\Organizer\RegistrationController;
 use App\Controllers\Organizer\TeamController as OrganizerTeamController;
+use App\Controllers\Organizer\ProjectController as OrganizerProjectController;
 
 use App\Controllers\Participant\HackathonController as ParticipantHackathonController;
 use App\Controllers\Participant\InvitationController;
@@ -404,6 +405,42 @@ $router->get(
 $router->get(
     '/organizer/hackathons/{id}/teams/{teamId}',
     [OrganizerTeamController::class, 'show'],
+    [
+        [
+            RoleMiddleware::class,
+            ['organizer']
+        ]
+    ]
+);
+
+
+/*
+|--------------------------------------------------------------------------
+| Organizer Project Management
+|--------------------------------------------------------------------------
+*/
+
+/*
+ * View Hackathon Projects
+ */
+$router->get(
+    '/organizer/hackathons/{id}/projects',
+    [OrganizerProjectController::class, 'index'],
+    [
+        [
+            RoleMiddleware::class,
+            ['organizer']
+        ]
+    ]
+);
+
+
+/*
+ * View Project Details
+ */
+$router->get(
+    '/organizer/hackathons/{id}/projects/{projectId}',
+    [OrganizerProjectController::class, 'show'],
     [
         [
             RoleMiddleware::class,
