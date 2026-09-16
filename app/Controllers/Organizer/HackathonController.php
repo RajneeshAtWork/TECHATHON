@@ -512,13 +512,13 @@ class HackathonController extends Controller
 
             'rules' =>
                 $rules !== ''
-                    ? $rules
-                    : null,
+                ? $rules
+                : null,
 
             'requirements' =>
                 $requirements !== ''
-                    ? $requirements
-                    : null,
+                ? $requirements
+                : null,
 
             'participation_type' =>
                 $participationType,
@@ -640,8 +640,8 @@ class HackathonController extends Controller
 
         if (
             empty(
-                $hackathon['created_at']
-            )
+            $hackathon['created_at']
+        )
         ) {
 
             http_response_code(403);
@@ -817,8 +817,8 @@ class HackathonController extends Controller
 
         if (
             empty(
-                $hackathon['created_at']
-            )
+            $hackathon['created_at']
+        )
         ) {
 
             http_response_code(403);
@@ -1221,13 +1221,13 @@ class HackathonController extends Controller
 
                     'rules' =>
                         $rules !== ''
-                            ? $rules
-                            : null,
+                        ? $rules
+                        : null,
 
                     'requirements' =>
                         $requirements !== ''
-                            ? $requirements
-                            : null,
+                        ? $requirements
+                        : null,
 
                     'participation_type' =>
                         $participationType,
@@ -1586,4 +1586,67 @@ class HackathonController extends Controller
             . '</p>'
             . '</div>';
     }
+
+    /*
+|--------------------------------------------------------------------------
+| Hackathon Management Overview
+|--------------------------------------------------------------------------
+*/
+
+    public function manage(int $id): string
+    {
+        $organizerModel =
+            new Organizer();
+
+        $organizer =
+            $organizerModel->findByUserId(
+                Auth::id()
+            );
+
+        if (!$organizer) {
+
+            http_response_code(403);
+
+            return 'Organizer profile not found.';
+        }
+
+
+        $hackathonModel =
+            new Hackathon();
+
+        $hackathon =
+            $hackathonModel->getManagementDetails(
+                $id,
+                (int) $organizer['id']
+            );
+
+
+        /*
+         * Ownership is enforced by the model query.
+         */
+        if (!$hackathon) {
+
+            http_response_code(404);
+
+            return 'Hackathon not found.';
+        }
+
+
+        return $this->view(
+            'organizer/hackathons/manage',
+            [
+                'title' =>
+                    'Manage ' .
+                    $hackathon['title'],
+
+                'organizer' =>
+                    $organizer,
+
+                'hackathon' =>
+                    $hackathon,
+            ]
+        );
+    }
+
+
 }

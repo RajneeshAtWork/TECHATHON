@@ -12,13 +12,17 @@ use App\Controllers\HomeController;
 
 use App\Controllers\Organizer\HackathonController as OrganizerHackathonController;
 use App\Controllers\Organizer\OrganizerController;
+use App\Controllers\Organizer\RegistrationController;
+use App\Controllers\Organizer\TeamController as OrganizerTeamController;
 
 use App\Controllers\Participant\HackathonController as ParticipantHackathonController;
 use App\Controllers\Participant\InvitationController;
 use App\Controllers\Participant\TeamController;
 use App\Controllers\Participant\ParticipantController;
-
 use App\Controllers\Participant\ProjectController;
+
+use App\Controllers\Judge\JudgeController;
+use App\Controllers\Judge\SubmissionController;
 
 use App\Core\Router;
 
@@ -41,13 +45,17 @@ $router = new Router();
 */
 
 /*
- * Registration
+ * Registration - Form
  */
 $router->get(
     '/register',
     [RegisterController::class, 'show']
 );
 
+
+/*
+ * Registration - Submit
+ */
 $router->post(
     '/register',
     [RegisterController::class, 'register']
@@ -55,13 +63,17 @@ $router->post(
 
 
 /*
- * Login
+ * Login - Form
  */
 $router->get(
     '/login',
     [LoginController::class, 'show']
 );
 
+
+/*
+ * Login - Submit
+ */
 $router->post(
     '/login',
     [LoginController::class, 'login']
@@ -222,6 +234,48 @@ $router->get(
 
 
 /*
+|--------------------------------------------------------------------------
+| Organizer Hackathon Registration Routes
+|--------------------------------------------------------------------------
+*/
+
+/*
+ * View Hackathon Registrations
+ */
+$router->get(
+    '/organizer/hackathons/{id}/registrations',
+    [RegistrationController::class, 'index'],
+    [
+        [
+            RoleMiddleware::class,
+            ['organizer']
+        ]
+    ]
+);
+
+
+/*
+ * View Registered Team From Registration
+ */
+$router->get(
+    '/organizer/registrations/{id}/team',
+    [RegistrationController::class, 'team'],
+    [
+        [
+            RoleMiddleware::class,
+            ['organizer']
+        ]
+    ]
+);
+
+
+/*
+|--------------------------------------------------------------------------
+| Organizer Hackathon Creation Routes
+|--------------------------------------------------------------------------
+*/
+
+/*
  * Create Hackathon - Form
  */
 $router->get(
@@ -250,6 +304,12 @@ $router->post(
     ]
 );
 
+
+/*
+|--------------------------------------------------------------------------
+| Organizer Hackathon Editing Routes
+|--------------------------------------------------------------------------
+*/
 
 /*
  * Edit Hackathon - Form
@@ -296,93 +356,72 @@ $router->post(
 );
 
 
+/*
+|--------------------------------------------------------------------------
+| Organizer Hackathon Management
+|--------------------------------------------------------------------------
+*/
+
+/*
+ * Hackathon Management Dashboard
+ */
+$router->get(
+    '/organizer/hackathons/{id}/manage',
+    [OrganizerHackathonController::class, 'manage'],
+    [
+        [
+            RoleMiddleware::class,
+            ['organizer']
+        ]
+    ]
+);
+
 
 /*
 |--------------------------------------------------------------------------
-| Participant Project Routes
+| Organizer Team Management
 |--------------------------------------------------------------------------
 */
 
 /*
- * My Projects
+ * View Participating Teams
  */
 $router->get(
-    '/participant/projects',
-    [ProjectController::class, 'index'],
+    '/organizer/hackathons/{id}/teams',
+    [OrganizerTeamController::class, 'index'],
     [
         [
             RoleMiddleware::class,
-            ['participant']
+            ['organizer']
         ]
     ]
 );
 
 
 /*
- * Create Project
+ * View Registered Team Details
  */
 $router->get(
-    '/participant/registrations/{id}/project/create',
-    [ProjectController::class, 'create'],
+    '/organizer/hackathons/{id}/teams/{teamId}',
+    [OrganizerTeamController::class, 'show'],
     [
         [
             RoleMiddleware::class,
-            ['participant']
+            ['organizer']
         ]
     ]
 );
 
-
-/*
- * Save Project
- */
-$router->post(
-    '/participant/registrations/{id}/project/create',
-    [ProjectController::class, 'store'],
-    [
-        [
-            RoleMiddleware::class,
-            ['participant']
-        ]
-    ]
-);
-
-
-/*
- * View Project
- */
-$router->get(
-    '/participant/projects/{id}',
-    [ProjectController::class, 'show'],
-    [
-        [
-            RoleMiddleware::class,
-            ['participant']
-        ]
-    ]
-);
-
-
-/*
- * Submit Project
- */
-$router->post(
-    '/participant/projects/{id}/submit',
-    [ProjectController::class, 'submit'],
-    [
-        [
-            RoleMiddleware::class,
-            ['participant']
-        ]
-    ]
-);
 
 /*
 |--------------------------------------------------------------------------
-| Participant Dashboard
+| Participant Routes
 |--------------------------------------------------------------------------
 */
 
+/*
+ * Participant Dashboard
+ */
 $router->get(
     '/participant',
     [ParticipantController::class, 'index'],
@@ -393,6 +432,13 @@ $router->get(
         ]
     ]
 );
+
+
+/*
+|--------------------------------------------------------------------------
+| Participant Hackathon Routes
+|--------------------------------------------------------------------------
+*/
 
 /*
  * Browse Hackathons
@@ -451,6 +497,87 @@ $router->post(
 $router->get(
     '/participant/registrations',
     [ParticipantHackathonController::class, 'registrations'],
+    [
+        [
+            RoleMiddleware::class,
+            ['participant']
+        ]
+    ]
+);
+
+
+/*
+|--------------------------------------------------------------------------
+| Participant Project Routes
+|--------------------------------------------------------------------------
+*/
+
+/*
+ * My Projects
+ */
+$router->get(
+    '/participant/projects',
+    [ProjectController::class, 'index'],
+    [
+        [
+            RoleMiddleware::class,
+            ['participant']
+        ]
+    ]
+);
+
+
+/*
+ * Create Project - Form
+ */
+$router->get(
+    '/participant/registrations/{id}/project/create',
+    [ProjectController::class, 'create'],
+    [
+        [
+            RoleMiddleware::class,
+            ['participant']
+        ]
+    ]
+);
+
+
+/*
+ * Create Project - Submit
+ */
+$router->post(
+    '/participant/registrations/{id}/project/create',
+    [ProjectController::class, 'store'],
+    [
+        [
+            RoleMiddleware::class,
+            ['participant']
+        ]
+    ]
+);
+
+
+/*
+ * View Project
+ */
+$router->get(
+    '/participant/projects/{id}',
+    [ProjectController::class, 'show'],
+    [
+        [
+            RoleMiddleware::class,
+            ['participant']
+        ]
+    ]
+);
+
+
+/*
+ * Submit Project
+ */
+$router->post(
+    '/participant/projects/{id}/submit',
+    [ProjectController::class, 'submit'],
     [
         [
             RoleMiddleware::class,
@@ -602,6 +729,78 @@ $router->post(
         [
             RoleMiddleware::class,
             ['participant']
+        ]
+    ]
+);
+
+
+/*
+|--------------------------------------------------------------------------
+| Judge Routes
+|--------------------------------------------------------------------------
+*/
+
+/*
+ * Judge Dashboard
+ */
+$router->get(
+    '/judge',
+    [JudgeController::class, 'index'],
+    [
+        [
+            RoleMiddleware::class,
+            ['judge']
+        ]
+    ]
+);
+
+
+/*
+|--------------------------------------------------------------------------
+| Judge Submission Routes
+|--------------------------------------------------------------------------
+*/
+
+/*
+ * View Assigned Hackathon Submissions
+ */
+$router->get(
+    '/judge/hackathons/{id}/submissions',
+    [SubmissionController::class, 'index'],
+    [
+        [
+            RoleMiddleware::class,
+            ['judge']
+        ]
+    ]
+);
+
+
+/*
+ * Evaluate Submission - Form
+ */
+$router->get(
+    '/judge/submissions/{id}/evaluate',
+    [SubmissionController::class, 'evaluate'],
+    [
+        [
+            RoleMiddleware::class,
+            ['judge']
+        ]
+    ]
+);
+
+
+/*
+ * Save Evaluation
+ */
+$router->post(
+    '/judge/submissions/{id}/evaluate',
+    [SubmissionController::class, 'store'],
+    [
+        [
+            RoleMiddleware::class,
+            ['judge']
         ]
     ]
 );

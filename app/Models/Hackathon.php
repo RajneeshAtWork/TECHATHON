@@ -275,4 +275,150 @@ class Hackathon extends Model
 
         return $statement->rowCount() > 0;
     }
+
+    /**
+     * Get organizer management information and statistics
+     * for one organizer-owned hackathon.
+     */
+    public function getManagementDetails(
+        int $hackathonId,
+        int $organizerId
+    ): ?array {
+        $statement = $this->db->prepare(
+            "SELECT
+            h.id,
+            h.title,
+            h.slug,
+            h.description,
+            h.rules,
+            h.requirements,
+            h.participation_type,
+            h.min_team_size,
+            h.max_team_size,
+            h.max_teams,
+            h.max_participants,
+            h.registration_start,
+            h.registration_end,
+            h.hackathon_start,
+            h.hackathon_end,
+            h.submission_deadline,
+            h.status,
+            h.created_at,
+            h.updated_at,
+
+            c.name AS category_name,
+
+            /*
+             * Total active registrations.
+             */
+            (
+                SELECT COUNT(*)
+                FROM hackathon_registrations hr
+                WHERE hr.hackathon_id = h.id
+                  AND hr.status = 'registered'
+            ) AS registration_count,
+
+            /*
+             * Registered teams.
+             *
+             * One registration row = one team slot.
+             */
+            (
+                SELECT COUNT(*)
+                FROM hackathon_registrations hr
+                WHERE hr.hackathon_id = h.id
+                  AND hr.registration_type = 'team'
+                  AND hr.status = 'registered'
+            ) AS team_count,
+
+            /*
+             * Registered individual participants.
+             */
+            (
+                SELECT COUNT(*)
+                FROM hackathon_registrations hr
+                WHERE hr.hackathon_id = h.id
+                  AND hr.registration_type = 'individual'
+                  AND hr.status = 'registered'
+            ) AS individual_count,
+
+            /*
+             * Participants belonging to registered teams.
+             */
+            (
+                SELECT COUNT(DISTINCT tm.user_id)
+                FROM hackathon_registrations hr
+                INNER JOIN team_members tm
+                    ON tm.team_id = hr.team_id
+                WHERE hr.hackathon_id = h.id
+                  AND hr.registration_type = 'team'
+                  AND hr.status = 'registered'
+            ) AS team_member_count,
+
+            /*
+             * Total projects.
+             */
+            (
+                SELECT COUNT(*)
+                FROM projects p
+                WHERE p.hackathon_id = h.id
+            ) AS project_count,
+
+            /*
+             * Submitted projects.
+             *
+             * DISTINCT project_id prevents multiple submission
+             * versions from inflating the count.
+             */
+            (
+                SELECT COUNT(DISTINCT s.project_id)
+                FROM submissions s
+                INNER JOIN projects p
+                    ON p.id = s.project_id
+                WHERE p.hackathon_id = h.id
+                  AND s.status IN ('submitted', 'late')
+            ) AS submission_count,
+
+            /*
+             * Judges assigned to this hackathon.
+             */
+            (
+                SELECT COUNT(DISTINCT hj.judge_id)
+                FROM hackathon_judges hj
+                WHERE hj.hackathon_id = h.id
+            ) AS judge_count
+
+         FROM {$this->table} h
+
+         LEFT JOIN categories c
+            ON c.id = h.category_id
+
+         WHERE h.id = :hackathon_id
+           AND h.organizer_id = :organizer_id
+
+         LIMIT 1"
+        );
+
+        $statement->execute([
+            'hackathon_id' => $hackathonId,
+            'organizer_id' => $organizerId,
+        ]);
+
+        $result = $statement->fetch();
+
+        if (!$result) {
+            return null;
+        }
+
+        /*
+         * Total participants = individual registrations
+         * + members of registered teams.
+         */
+        $result['participant_count'] =
+            (int) $result['individual_count']
+            + (int) $result['team_member_count'];
+
+        return $result;
+    }
+
 }
